@@ -2,16 +2,18 @@ from pathlib import Path
 from joblib import Parallel, delayed
 import numpy as np
 import pandas as pd
+from pandas.api.types import is_numeric_dtype
 import rasterio
 import geopandas as gpd
 
 
 geom_cols = ['POINT_X', 'POINT_Y']
-fixed_cols = geom_cols + ["rows", "cols"]
+rows_and_cols = ["rows", "cols"]
+fixed_cols = geom_cols + rows_and_cols
 fixed_cols_set = set(fixed_cols)
 
 
-def dedupe_raster(shp: Path, tif: Path, deduped_shp: Path):
+def dedupe_shape(shp: Path, tif: Path, deduped_shp: Path):
     """
     :param shp: input shapefile with dense points
     :param tif: sample tif to read resolution details
@@ -20,14 +22,11 @@ def dedupe_raster(shp: Path, tif: Path, deduped_shp: Path):
     """
     print("====================================\n", f"deduping {shp.as_posix()}")
     pts = gpd.read_file(shp)
-    cols_without_geom_to_retain = [
-        'K_ppm_imp',
-        'K_ppm_imp_',
-        'Na_cats',
-    ]
-    cols = cols_without_geom_to_retain + ['geometry']
+    non_number_cols = [c for c, t in zip(pts.dtypes.index.to_list(), pts.dtypes.values) if ~is_numeric_dtype(t)]  # contain geometry
+    number_cols = [c for c, t in zip(pts.dtypes.index.to_list(), pts.dtypes.values) if is_numeric_dtype(t)]
+    cols = non_number_cols + number_cols
     pts = pts[cols]
-    for g in geom_cols:
+    for g in fixed_cols:
         if g in pts.columns:
             pts = pts.drop(g, axis=1)
     coords = np.array([(p.x, p.y) for p in pts.geometry])
@@ -51,12 +50,10 @@ def dedupe_raster(shp: Path, tif: Path, deduped_shp: Path):
         )
         pts["rows"], pts["cols"] = rasterio.transform.rowcol(transform, coords[:, 0], coords[:, 1])
 
-    pts_count = pts.groupby(by=['rows', 'cols'], as_index=False).agg(pixel_count=('rows', 'count'))
-    additional_cols = ['rows', 'cols']
-
-    pts_mean = pts[cols_without_geom_to_retain + additional_cols + geom_cols].groupby(by=['rows', 'cols'], as_index=False).apply(custom_func)
-    pts_deduped = pts_mean.merge(pts_count, how='inner', on=['rows', 'cols'])
-
+    pts_count = pts.groupby(by=rows_and_cols, as_index=False).agg(pixel_count=('rows', 'count'))
+    pts_mean = pts.groupby(by=['rows', 'cols'], as_index=False).apply(custom_func, numbers_cols=number_cols,
+                                                                      non_number_cols=non_number_cols)
+    pts_deduped = pts_mean.merge(pts_count, how='inner', on=rows_and_cols)
     pts_deduped = gpd.GeoDataFrame(pts_deduped,
                                    geometry=gpd.points_from_xy(pts_deduped['POINT_X'], pts_deduped['POINT_Y']),
                                    crs="EPSG:3577"   # Australian Albers
@@ -65,12 +62,11 @@ def dedupe_raster(shp: Path, tif: Path, deduped_shp: Path):
     return pts_deduped
 
 
-def custom_func(group):
-    output = {**group.iloc[0, :][fixed_cols]}
-    for col in group.columns.to_list():
-        if col not in fixed_cols_set:
-            arr = group.loc[:, col]
-            output[col] = np.mean(arr[arr != -9999])
+def custom_func(group, numbers_cols, non_number_cols):
+    output = {**group.iloc[0, :][non_number_cols + fixed_cols]}
+    for col in numbers_cols:
+        arr = group.loc[:, col]
+        output[col] = np.mean(arr[arr != -9999])
     gdf = pd.DataFrame.from_dict({k: [v] for k, v in output.items()})
     gdf.index = group.index
     return gdf
@@ -87,7 +83,7 @@ if __name__ == '__main__':
 
     for s in shapefiles.glob("geochem_sites.shp"):
         deduped_shp = output_dir.joinpath(s.stem + "_mean_removed_9999.shp")
-        dedupe_raster(shp=s, tif=dem, deduped_shp=deduped_shp)
+        dedupe_shape(shp=s, tif=dem, deduped_shp=deduped_shp)
 
     # Parallel(
     #         n_jobs=-1,
