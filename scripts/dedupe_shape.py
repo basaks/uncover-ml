@@ -6,6 +6,11 @@ import rasterio
 import geopandas as gpd
 
 
+geom_cols = ['POINT_X', 'POINT_Y']
+fixed_cols = geom_cols + ["rows", "cols"]
+fixed_cols_set = set(fixed_cols)
+
+
 def dedupe_raster(shp: Path, tif: Path, deduped_shp: Path):
     """
     :param shp: input shapefile with dense points
@@ -14,8 +19,14 @@ def dedupe_raster(shp: Path, tif: Path, deduped_shp: Path):
     :return:
     """
     print("====================================\n", f"deduping {shp.as_posix()}")
-    geom_cols = ['POINT_X', 'POINT_Y']
     pts = gpd.read_file(shp)
+    cols_without_geom_to_retain = [
+        'K_ppm_imp',
+        'K_ppm_imp_',
+        'Na_cats',
+    ]
+    cols = cols_without_geom_to_retain + ['geometry']
+    pts = pts[cols]
     for g in geom_cols:
         if g in pts.columns:
             pts = pts.drop(g, axis=1)
@@ -41,7 +52,9 @@ def dedupe_raster(shp: Path, tif: Path, deduped_shp: Path):
         pts["rows"], pts["cols"] = rasterio.transform.rowcol(transform, coords[:, 0], coords[:, 1])
 
     pts_count = pts.groupby(by=['rows', 'cols'], as_index=False).agg(pixel_count=('rows', 'count'))
-    pts_mean = pts.groupby(by=['rows', 'cols'], as_index=False).mean()
+    additional_cols = ['rows', 'cols']
+
+    pts_mean = pts[cols_without_geom_to_retain + additional_cols + geom_cols].groupby(by=['rows', 'cols'], as_index=False).apply(custom_func)
     pts_deduped = pts_mean.merge(pts_count, how='inner', on=['rows', 'cols'])
 
     pts_deduped = gpd.GeoDataFrame(pts_deduped,
@@ -52,19 +65,31 @@ def dedupe_raster(shp: Path, tif: Path, deduped_shp: Path):
     return pts_deduped
 
 
+def custom_func(group):
+    output = {**group.iloc[0, :][fixed_cols]}
+    for col in group.columns.to_list():
+        if col not in fixed_cols_set:
+            arr = group.loc[:, col]
+            output[col] = np.mean(arr[arr != -9999])
+    gdf = pd.DataFrame.from_dict({k: [v] for k, v in output.items()})
+    gdf.index = group.index
+    return gdf
+
+
+
 if __name__ == '__main__':
     shapefiles = Path("configs/data/")
-    downscale_factor = 6  # keep 1 point in a 6x6 cell
+    downscale_factor = 1  # keep 1 point in a 6x6 cell
 
-    dem = Path('/home/my_dem.tif')
+    dem = Path('configs/data/LATITUDE_GRID1.tif')
     output_dir = Path('1in6')
     output_dir.mkdir(exist_ok=True, parents=True)
 
-    # for s in shapefiles.glob("*.shp"):
-    #     deduped_shp = output_dir.joinpath(s.name)
-    #     dedupe_raster(shp=s, tif=dem, deduped_shp=deduped_shp)
+    for s in shapefiles.glob("geochem_sites.shp"):
+        deduped_shp = output_dir.joinpath(s.stem + "_mean_removed_9999.shp")
+        dedupe_raster(shp=s, tif=dem, deduped_shp=deduped_shp)
 
-    Parallel(
-            n_jobs=-1,
-            verbose=100,
-        )(delayed(dedupe_raster)(s, dem, output_dir.joinpath(s.name)) for s in shapefiles.glob("geochem_sites.shp"))
+    # Parallel(
+    #         n_jobs=-1,
+    #         verbose=100,
+    #     )(delayed(dedupe_raster)(s, dem, output_dir.joinpath(s.name)) for s in shapefiles.glob("geochem_sites.shp"))
