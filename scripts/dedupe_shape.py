@@ -68,9 +68,8 @@ def custom_func(group, numbers_cols, non_number_cols):
         arr = group.loc[:, col]
         output[col] = np.mean(arr[arr != -9999])
     gdf = pd.DataFrame.from_dict({k: [v] for k, v in output.items()})
-    gdf.index = group.index
+    # gdf.index = group.index  # this line sometimes did not work on large shapefiles from John
     return gdf
-
 
 
 if __name__ == '__main__':
