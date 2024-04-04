@@ -3,7 +3,7 @@ import numpy as np
 import logging
 
 from affine import Affine
-from uncoverml.geoio import RasterioImageSource
+# from uncoverml.geoio import RasterioImageSource
 
 log = logging.getLogger(__name__)
 
@@ -29,9 +29,9 @@ def construct_splits(npixels, nchunks, overlap=0):
 
 
 class Image:
-    def __init__(self, source: RasterioImageSource,
+    def __init__(self, source,
                  chunk_idx=0, nchunks=1, overlap=0,
-                 t_source: Optional[RasterioImageSource] = None,
+                 t_source=None,
                  ):
         assert chunk_idx >= 0 and chunk_idx < nchunks
 
