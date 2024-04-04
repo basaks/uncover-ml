@@ -111,6 +111,7 @@ setup(
         "imageio==2.9.0",
         "optuna==3.2.0",
         "seaborn==0.13.0",
+        "lightgbm==3.3.5",
     ],
     extras_require={
         'kmz': [
