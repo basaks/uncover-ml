@@ -130,30 +130,3 @@ profile.update({'driver': 'COG', 'BIGTIFF': 'YES', 'compress': 'lzw'})
 
 with rio.open(f'MRVBF_S_8_5_blend_dist_meso_weighted_average_quadratic_bigtiff.tif', 'w', ** profile) as dst:
     dst.write(output)
-
-
-# [Yesterday 17:31] John Wilford
-#
-# Im preparing another blend like the example below                                                                                                                                                     near_rough = "DEM_fill_smooth_mag_2_cog_nan.tif"
-#
-# far_smooth = "/g/data/jl14/new_ceno_inputs/zero_blend.tif"
-#
-# scale = "/g/data/jl14/80m_covarites/proximity/P_Dist_Meso.tif"
-#
-# [Yesterday 17:32] John Wilford
-#
-# near ==/g/data/jl14/80m_covarites/terrain/T_MRVBF_S.tif
-#
-# [Yesterday 17:52] John Wilford
-#
-# far_smooth == /g/data/jl14/new_ceno_inputs/five_blend_float.tif
-#
-# [Yesterday 17:52] John Wilford
-#
-# scale = "/g/data/jl14/80m_covarites/proximity/P_Dist_Meso.tif"
-#
-# [Yesterday 17:53] John Wilford
-#
-# also please try it again with far_smooth == /g/data/jl14/new_ceno_inputs/six_blend_float.tif
-#
-# like 1
