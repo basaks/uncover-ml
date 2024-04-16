@@ -376,7 +376,7 @@ def predict(model_or_cluster_file, partitions, mask, retain, prediction_template
                                      **config.geotif_options)
 
     for i in range(config.n_subchunks):
-        log.info("starting to render partition {}".format(i+1))
+        log.info(f"starting to render partition {i+1}/{config.n_subchunks}")
         ls.predict.render_partition(model, i, image_out, config)
 
     # explicitly close output rasters
@@ -453,7 +453,7 @@ def pca(pipeline_file, partitions, subsample_fraction, mask, retain):
                                      band_tags=[f'pc_{n}' for n in range(1, whiten_transform.keepdims+1)],
                                      **config.geotif_options)
     for i in range(config.n_subchunks):
-        log.info("starting to render partition {}".format(i+1))
+        log.info(f"starting to render partition {i+1}/{config.n_subchunks}")
         ls.predict.export_pca(i, image_out, config)
 
     # explicitly close output rasters
