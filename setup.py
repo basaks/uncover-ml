@@ -87,7 +87,7 @@ setup(
         'pycontracts == 1.7.9',
         'tables >= 3.2.2',
         'rasterio == 1.3.7',
-        'catboost == 1.0.3',
+        'catboost >= 1.2.1',
         'affine >= 2.2.1',
         'pyshp == 2.1.0',
         'click >= 6.6',

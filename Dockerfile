@@ -18,4 +18,6 @@ RUN apt install git openmpi-bin libopenmpi-dev -y \
     && alias pip=pip3
 
 RUN pip install -U pip
+
+# RUN ./cubist/makecubist .
 # RUN pip install -e .[dev]
