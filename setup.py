@@ -30,6 +30,8 @@ def build_cubist():
         print(out)
     except:
         out = subprocess.run(['./cubist/makecubist', '.'])
+
+    subprocess.check_output("git config --global --add safe.directory /usr/src/uncover-ml", shell=True)
     git_hash = subprocess.check_output(['git', 'rev-parse',
                                         'HEAD']).decode().strip()
     with open('uncoverml/git_hash.py', 'w') as f:
