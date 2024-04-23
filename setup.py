@@ -30,6 +30,8 @@ def build_cubist():
         print(out)
     except:
         out = subprocess.run(['./cubist/makecubist', '.'])
+
+    subprocess.check_output("git config --global --add safe.directory /usr/src/uncover-ml", shell=True)
     git_hash = subprocess.check_output(['git', 'rev-parse',
                                         'HEAD']).decode().strip()
     with open('uncoverml/git_hash.py', 'w') as f:
@@ -85,7 +87,7 @@ setup(
         'pycontracts == 1.7.9',
         'tables >= 3.2.2',
         'rasterio == 1.3.7',
-        'catboost == 1.0.3',
+        'catboost >= 1.2.1',
         'affine >= 2.2.1',
         'pyshp == 2.1.0',
         'click >= 6.6',
@@ -111,6 +113,7 @@ setup(
         "imageio==2.9.0",
         "optuna==3.2.0",
         "seaborn==0.13.0",
+        "lightgbm==3.3.5",
     ],
     extras_require={
         'kmz': [

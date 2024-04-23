@@ -285,7 +285,6 @@ class TransformedOLS(TransformMixin, TagsMixin, LinearRegression):
             target_transform = transforms.transforms[target_transform]()
         self.target_transform = target_transform
         super(TransformedOLS, self).__init__(fit_intercept=fit_intercept,
-                                             normalize=normalize,
                                              copy_X=copy_X,
                                              n_jobs=n_jobs)
 
@@ -308,7 +307,7 @@ class TransformedElasticNet(TransformMixin, TagsMixin, ElasticNet):
 
         super(TransformedElasticNet, self).__init__(
             alpha=alpha, l1_ratio=l1_ratio, fit_intercept=fit_intercept,
-            normalize=normalize, precompute=precompute, max_iter=max_iter,
+            precompute=precompute, max_iter=max_iter,
             copy_X=copy_X, tol=tol, warm_start=warm_start, positive=positive,
             random_state=random_state, selection=selection
             )

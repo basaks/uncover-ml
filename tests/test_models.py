@@ -7,7 +7,7 @@ from uncoverml.krige import krige_methods, Krige, all_ml_models, MLKrige
 from uncoverml.models import (apply_masked,
                               apply_multiple_masked,
                               modelmaps)
-from uncoverml.optimise.models import transformed_modelmaps
+from uncoverml.optimise.models import transformed_modelmaps, no_test_support_classifiers
 
 models = {**transformed_modelmaps, **modelmaps}
 
@@ -101,7 +101,9 @@ def test_trasnsformed_model_attr(get_transformed_model):
                                       'multicubist',
                                       'decisiontree',
                                       'extratree',
-                                      'catboost'
+                                      'catboost',
+                                      'svrmulti',
+                                     * list(no_test_support_classifiers.keys())
                                      ]])
 def models_supported(request):
     return request.param
