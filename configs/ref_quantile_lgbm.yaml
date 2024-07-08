@@ -38,11 +38,13 @@ learning:
     target_transform: identity
     random_state: 1
     max_depth: 20
+    upper_alpha: 0.95
+    lower_alpha: 0.05
 
 
 prediction:
   prediction_template: configs/data/sirsam/dem_foc2.tif
-  quantiles: 0.95
+  quantiles: 0.90
   outbands: 4
 
 

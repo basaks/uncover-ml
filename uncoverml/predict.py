@@ -21,7 +21,7 @@ modelmaps.update(transformed_modelmaps)
 modelmaps.update(krig_dict)
 
 
-def predict(data, model, interval=0.95, **kwargs):
+def predict(data, model, interval=0.9, **kwargs):
 
     # Classification
     if hasattr(model, 'predict_proba'):
@@ -34,6 +34,8 @@ def predict(data, model, interval=0.95, **kwargs):
     else:
         def pred(X):
             if hasattr(model, 'predict_dist'):
+                if hasattr(model, 'upper_alpha') and hasattr(model, 'lower_alpha'):
+                    interval = model.upper_alpha - model.lower_alpha
                 Ey, Vy, ql, qu = model.predict_dist(X, interval, **kwargs)
                 predres = np.hstack((Ey[:, np.newaxis], Vy[:, np.newaxis],
                                      ql[:, np.newaxis], qu[:, np.newaxis]))

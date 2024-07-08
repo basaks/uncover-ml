@@ -641,6 +641,7 @@ class QuantileLGBM(BaseEstimator, RegressorMixin, TagsMixin):
         self.alpha = alpha
         self.upper_alpha = upper_alpha
         self.lower_alpha = lower_alpha
+        self.interval = upper_alpha - lower_alpha
 
     @staticmethod
     def collect_prediction(regressor, X_test):
@@ -658,7 +659,7 @@ class QuantileLGBM(BaseEstimator, RegressorMixin, TagsMixin):
     def predict(self, X, *args, **kwargs):
         return self.predict_dist(X, *args, **kwargs)[0]
 
-    def predict_dist(self, X, interval=0.95, *args, ** kwargs):
+    def predict_dist(self, X, interval=0.90, *args, ** kwargs):
         Ey = self.gb.predict(X)
 
         ql_ = self.collect_prediction(self.gb_quantile_lower, X)
@@ -667,9 +668,17 @@ class QuantileLGBM(BaseEstimator, RegressorMixin, TagsMixin):
         Vy = ((qu_ - ql_) / (norm.ppf(self.upper_alpha) - norm.ppf(self.lower_alpha))) ** 2
 
         # to make gbm quantile model consistent with other quantile based models
-        ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
-
-        return Ey, Vy, ql, qu
+        if np.isclose(interval, self.interval):
+            return Ey, Vy, ql_, qu_
+        else:
+            # if the interval matches (upper_alpha-lower_alpha), we don't need to compute ql, qu
+            # and also don't need to make assumpition of normal distribution to compute ql and qu
+            log.warn("===============================================")
+            log.warn("Used normal distribution assumption to compute quantiles."
+                     " Using quantiles=(upper_alpha-lower_alpha) will remove this requirement!")
+            log.warn("===============================================")
+            ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
+            return Ey, Vy, ql, qu
 
 
 class GBMReg(GradientBoostingRegressor, TagsMixin):
@@ -758,6 +767,7 @@ class QuantileGradientBoosting(BaseEstimator, RegressorMixin, TagsMixin):
         self.n_iter_no_change = n_iter_no_change
         self.tol = tol
         self.ccp_alpha = ccp_alpha
+        self.interval = upper_alpha - lower_alpha
 
         self.gb = GradientBoostingRegressor(
             learning_rate=learning_rate, n_estimators=n_estimators,
@@ -820,7 +830,7 @@ class QuantileGradientBoosting(BaseEstimator, RegressorMixin, TagsMixin):
     def predict(self, X, *args, **kwargs):
         return self.predict_dist(X, *args, **kwargs)[0]
 
-    def predict_dist(self, X, interval=0.95, *args, ** kwargs):
+    def predict_dist(self, X, interval=0.9, *args, ** kwargs):
         Ey = self.gb.predict(X)
 
         ql_ = self.collect_prediction(self.gb_quantile_lower, X)
@@ -829,9 +839,17 @@ class QuantileGradientBoosting(BaseEstimator, RegressorMixin, TagsMixin):
         Vy = ((qu_ - ql_) / (norm.ppf(self.upper_alpha) - norm.ppf(self.lower_alpha))) ** 2
 
         # to make gbm quantile model consistent with other quantile based models
-        ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
-
-        return Ey, Vy, ql, qu
+        if np.isclose(interval, self.interval):
+            return Ey, Vy, ql_, qu_
+        else:
+            # if the interval matches (upper_alpha-lower_alpha), we don't need to compute ql, qu
+            # and also don't need to make assumpition of normal distribution to compute ql and qu
+            log.warn("===============================================")
+            log.warn("Used normal distribution assumption to compute quantiles."
+                     " Using quantiles=(upper_alpha-lower_alpha) will remove this requirement!")
+            log.warn("===============================================")
+            ql, qu = norm.interval(interval, loc=Ey, scale=np.sqrt(Vy))
+            return Ey, V, ql, qu
 
 
 class CatBoostWrapper(CatBoostRegressor, TagsMixin):

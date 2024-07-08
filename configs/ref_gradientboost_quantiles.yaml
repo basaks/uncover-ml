@@ -56,7 +56,7 @@ learning:
       'min_weight_fraction_leaf': Real(0.0, 0.5, prior='uniform')
 
 prediction:
-  quantiles: 0.95
+  quantiles: 0.9
   outbands: 4
 
 
