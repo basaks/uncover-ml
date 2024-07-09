@@ -73,7 +73,7 @@ def learn(pipeline_file, param_json, partitions):
             with open(pj, 'r') as f:
                 log.info(f"{config.algorithm} params were updated using {param_json}")
                 param_dicts.append(json.load(f))
-        config.algorithm_args = {k: v for D in param_dicts for k, v in D.items()}
+        config.algorithm_args.update({k: v for D in param_dicts for k, v in D.items()})
     param_str = f'Learning {config.algorithm} model with the following params:\n'
     for param, value in config.algorithm_args.items():
         param_str += "{}\t= {}\n".format(param, value)
