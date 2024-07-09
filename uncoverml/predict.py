@@ -22,7 +22,7 @@ modelmaps.update(krig_dict)
 
 
 def predict(data, model, interval=0.9, **kwargs):
-
+    log.debug(f"Supplied prediction quantiles {interval}")
     # Classification
     if hasattr(model, 'predict_proba'):
         def pred(X):
@@ -36,6 +36,10 @@ def predict(data, model, interval=0.9, **kwargs):
             if hasattr(model, 'predict_dist'):
                 if hasattr(model, 'upper_alpha') and hasattr(model, 'lower_alpha'):
                     interval = model.upper_alpha - model.lower_alpha
+                    log.warn(f"As upper and lower alpha are both specified, "
+                             f"we used interval = model.upper_alpha - model.lower_alpha."
+                             f" We ignored prediction.quantiles and used {interval}")
+
                 Ey, Vy, ql, qu = model.predict_dist(X, interval, **kwargs)
                 predres = np.hstack((Ey[:, np.newaxis], Vy[:, np.newaxis],
                                      ql[:, np.newaxis], qu[:, np.newaxis]))
