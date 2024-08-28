@@ -1,0 +1,62 @@
+
+# not currently implemented
+# patchsize: 0
+
+features:
+  - name: my continuous features
+    type: continuous
+    files:
+      - path: configs/data/sirsam/er_depg.tif
+      - path: configs/data/sirsam/sagawet_b_sir.tif
+      - path: configs/data/sirsam/dem_foc2.tif
+      - path: configs/data/sirsam/outcrop_dis2.tif
+      - path: configs/data/sirsam/k_15v5.tif
+      - path: configs/data/sirsam/relief_apsect.tif
+    transforms:
+    #      - standardise
+    #      - whiten:
+    #          keep_fraction: 0.8
+    imputation: mean
+
+
+preprocessing:
+  imputation: none
+  # imputation: gaus
+  # imputation: nn
+  # imputation: mean
+
+  transforms:
+  # - whiten:
+  # keep_fraction: 0.8
+
+targets:
+  file: configs/data/geochem_sites.shp
+  property: Na_cats
+
+learning:
+  algorithm: transformedlogistic
+  arguments:
+    random_state: 1
+  optimisation:
+    hyperopt_params:
+      max_evals: 5
+      step: 2
+      cv: 3
+      verbose: true
+      random_state: 3
+      scoring: accuracy  # r2, neg_mean_absolute_error, etc..see note above
+      algo: bayes   # bayes, or anneal
+    hp_params_space:
+      C: uniform('C', 0.0, 0.1)
+
+prediction:
+  quantiles: 0.95
+
+validation:
+- parallel
+- k-fold:
+    folds: 5
+    random_seed: 1
+
+output:
+  directory: gbc/
